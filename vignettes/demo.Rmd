@@ -1,0 +1,152 @@
+---
+title: "An introduction to ActivityProfileR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{An introduction to ActivityProfileR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Purpose
+
+The purpose of this demo is to walk through how to use the functionality of our package. This package creates the functional ANOVA test described in *Nonparametric comparisons of activity profiles from wear- able device data* by Chang et. al. Our demo will walk through how to set up your data, do some exploratory analyses and perform the test.
+
+# Set Up
+
+```{r, warning =  FALSE, message = FALSE }
+library(tidyverse)  # For data manipulation (dplyr, tidyr, purrr)
+library(rootSolve)  # For root solving in -2logR(a)
+library(multidplyr) # for parallel processing
+library(ActivityProfileR)
+set.seed(8105)         # Keeping bootstrap samples consistent
+```
+
+# Simulating Data
+
+For this demo, we will generate accelerometer data for three independent groups of subjects. Accelerometer data is simulated by taking the positive components of a Ornstein-Uhlenbeck process. The `prepare_sim_data()` function will generate the data, given some group parameters. Each group's set of parameters should be given as a list with the following components:
+
+- `n_subj`: how many subjects should be a part of this group?
+- `group_id`: a number that uniquely identifies the group in the whole sample
+- `n_points`: how many accelerometer data points should we generate for each person?
+- `scaling`: what factor should we scale the resulting accelerometer data?
+- `thetas`: a 3-length vector describing what thetas should be passed into `ESGtoolkit::simdiff`, which is what generates the accelerometer data
+
+```{r}
+# Set up the group parameters as a list of lists
+params_by_group = list(
+  list(n_subj = 70, n_points = 1000, 
+       scaling = 300, thetas = c(-0.8, 2.0, 2.31)),
+  list(n_subj = 100, n_points = 1000, 
+       scaling = 300, thetas = c(-0.402, 1.0, 1.65)),
+  list(n_subj = 130, n_points = 1000, 
+       scaling = 300, thetas = c(-0.201, 0.5, 1.18))
+)
+
+sim_data = prepare_sim_data(params_by_group)
+```
+
+```{r, echo = FALSE}
+sim_data %>% 
+  unnest(Xt) %>% 
+  filter(subject_id == 1, group == 1) %>% 
+  mutate( ai = 1:1000) %>% 
+  ggplot(aes(x = ai, y = Xt)) +
+  geom_point() +
+  labs(
+    title = "Sample of a subject's activity data",
+    x = "Time",
+    y = "Activity (steps)"
+  )
+```
+
+The resulting dataset in `sim_data` contains a subject ID, a group ID, and the acceleometer data for each person.
+
+```{r, echo = FALSE}
+head(sim_data)
+```
+
+# Producing The Activity Profle $T(\alpha)$
+
+A functional ANOVA test described in the original manuscript looks at activity profiles, denoted $T(\alpha)$ instead of the activity data $X(t)$. The code below uses the `create_activity_profile` function to make $T(\alpha)$ for each subject. In order to create $T(\alpha)$, we need to extract a grid of activity (step) values that will work across all the groups. This is what `extract_activity_grid` is doing. We also adds some additional columns to the processed data that help with calculating the test later on. 
+
+```{r}
+activity_grid = extract_activity_grid(sim_data, 
+                                      quantiles = c(0.05, 0.95),
+                                      grid_length = 100)
+```
+
+```{r, echo = FALSE }
+print(paste0(activity_grid[1], " is the first value in the grid"))
+print(paste0(round(activity_grid[100], 1), " is the last value in the grid"))
+```
+
+The `EL_test()` function does the following internally, but you can also use the `add_activity_profile()` function on the data if you want to visualize the activity profiles.
+
+```{r}
+processed_sim_data = add_activity_profile(sim_data, activity_grid)
+```
+
+The end result is that each of the activity profiles have been created for each subject across all groups.
+
+```{r, echo = FALSE}
+head(processed_sim_data)
+```
+
+We can visualize the activity profiles for each group by unnesting the data and plotting by group.
+
+```{r, echo = FALSE}
+processed_sim_data %>% 
+  unnest(c(Ta, ai)) %>% 
+  ggplot(aes(x = ai, y = Ta, group = subject_id, color = factor(group))) + 
+  geom_line(alpha = 0.3) + 
+  facet_grid(group ~ .) +
+  theme(legend.position = "bottom") +
+  labs(
+    title = "Activity profiles for each subject by group",
+    x = "Activity index alpha",
+    y = "Proportion of data that exceeds activity at index alpha"
+  )
+```
+
+# Calculating Functional ANOVA Test
+
+The processing done above is already packed into the `EL_test` function that performs the test. All you need to do is pass in this data into the function.
+
+```{r, message = FALSE, warning = FALSE }
+start_time = Sys.time()
+el = EL_test(sim_data)
+end_time = Sys.time()
+print(paste0("Non-parallel version took ", round(end_time - start_time, 2), " minutes to run."))
+```
+
+The output of `EL_test` is a list of values associated with the functional ANOVA test. 
+
+- `sup_test`: This is the supremum of all of the $-2log(\alpha)$ values calculated for each activity index $\alpha$.
+- `sup_EL_crit`: This is the 95% quantile of the bootstrap statistics calculated on the data.
+- `out_sup_pval`: This represents the proportion of bootstrap test statistics were greater than `sup_test`.
+- `neg2logRa_tests`: These are the $-2log(\alpha)$ values calculated for each activity index $\alpha$.
+- `bootstrap`: These are all of the bootstrap datasets created from the original data.
+
+```{r}
+# Investigate the output of the test
+el$sup_test
+el$sup_EL_crit
+el$out_sup_pval
+```
+
+# Parallelized Version of the EL Test
+
+There is also a parallelized version of the test that helps speed up the process. It uses `multidplyr`.
+
+```{r}
+# Example case of using the parallelized version of the test
+
+# Determine the number of cores to use in parallelized version of functions
+n_cores = parallel::detectCores() - 2
+
+start_time = Sys.time()
+par_el = EL_test_parallel(sim_data, n_cores = n_cores)
+end_time = Sys.time()
+print(paste0("Parallel version took ", round(end_time - start_time, 2), " minutes to run."))
+```
+

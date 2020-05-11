@@ -1,0 +1,26 @@
+Package: ActivityProfileR
+Title: An implementation of a functional ANOVA test for activity data
+Version: 0.1.0
+Authors@R: 
+    person(given = "Christian",
+           family = "Pascual",
+           role = c("aut", "cre"),
+           email = "chris.b.pascual@gmail.com")
+Description: An implementation of the functional ANOVA test described in "Nonparametric 
+    comparisons of activity profiles from wear- able device data" by Chang et. al. The
+    test takes activity data from groups of subjects and incorporates a nonparametric
+    likelihood ratio approach to provide a simultaneous confidence band and functional
+    ANOVA test for the mean of activity profiles.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
+Imports:
+    dplyr (>= 0.8.5),
+    ESGtoolkit (>= 0.1),
+    purrr (>= 0.3.3),
+    rootSolve (>= 1.8.2),
+    tibble (>= 3.0.0),
+    tidyr (>= 1.0.2)
+Suggests:
+    multidplyr (>= 0.0.0.900)
