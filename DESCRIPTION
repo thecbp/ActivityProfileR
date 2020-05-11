@@ -24,3 +24,5 @@ Imports:
     tidyr (>= 1.0.2)
 Suggests:
     multidplyr (>= 0.0.0.900)
+VignetteBuilder: 
+    knitr

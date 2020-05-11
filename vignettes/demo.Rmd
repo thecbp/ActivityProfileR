@@ -1,5 +1,6 @@
 ---
 title: "An introduction to ActivityProfileR"
+author: "Christian Pascual"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{An introduction to ActivityProfileR}

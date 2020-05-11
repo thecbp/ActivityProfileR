@@ -67,4 +67,4 @@ n_cores = parallel::detectCores() - 2
 par_el = EL_test_parallel(sim_data, n_cores = n_cores)
 ```
 
-Parallelization can cut down calculation time by about half. See vignettes("demo") for more details.
+Parallelization can cut down calculation time by about half. See `vignettes("demo")` for more details.
