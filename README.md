@@ -1,8 +1,6 @@
 # ActivityProfileR
----
 
 ## Overview
----
 
 ActivityProfileR is an implementation of the functional ANOVA test for activity data described in *Nonparametric comparisons of activity profiles from wearable device data* by Hsin-wen Chang. A presentation on the original paper can be found [here](https://www.ima.umn.edu/materials/2019-2020/DW9.16-17.19/28237/talk_Minneapolis.pdf). Once your data is in the correct format (described below), you can pass it into `EL_test()`, and it will conduct the statistical test for you. 
 
@@ -11,7 +9,6 @@ ActivityProfileR uses the tidyverse libraries for data cleaning and manipulation
 The statistical test can take a while to run, so parallelizaiton is recommended.
 
 ## Installation
----
 
 ```
 # install.packages("devtools")
@@ -19,7 +16,6 @@ devtools::install_github("ActivityProfileR")
 ```
 
 ## Usage
----
 
 To use ActivityProfileR, you must first get your activity data into the correct format. The `EL_test()` function expects the activity data for each subject to be nested, so that each subject will only have one row. 
 
