@@ -4,46 +4,40 @@
 #' into the activity profile, Ta
 #'
 #' @param data dataset containing the activity counts for each group in the sample
-#' @param activity_grid A vector derived from extract_activity_grid
+#' @param activity_col the name of the column that contains the activity data
+#' @param group_col the name of the column that contains the grouping label
 #'
 #' @return the same dataset with an additional columns for the activity profiles and analysis
 #' @export
 #'
+#' @importFrom rlang .data
+#' @importFrom magrittr %>%
+#' @name %>%
+#'
 #' @examples
+#' processed_data = data %>% 
+#'   add_activity_profile(activity_col = "Xt", group_col = "group")
 #' 
-#' activity_grid = extract_activity_grid(data)
-#' processed_data = add_activity_profile(data, activity_grid)
-#' 
-add_activity_profile = function(data, activity_grid) {
-
-  create_activity_profile = function(Xt, activity_grid) {
-    Ta = tibble::tibble(
-      ai = activity_grid
-    ) %>% 
-      dplyr::mutate(
-        Ta = unlist(map(ai, function(a) { 
-          mean(Xt > a)
-        }))
-      ) %>% 
-      pull(Ta)
-    
-    return(Ta)
-  }
+add_activity_profile = function(data, 
+                                activity_col, 
+                                group_col,
+                                grid_length = 100, 
+                                quantiles = c(0.05, 0.95)) {
   
-  processed_data = data %>% 
+  activity_grid = extract_activity_grid(data, 
+                                        activity_col = activity_col,
+                                        group_col = group_col,
+                                        grid_length = grid_length,
+                                        quantiles = quantiles)
+  
+  data %>% 
     dplyr::mutate(
-      Ta = purrr::map(Xt, ~create_activity_profile(.x, activity_grid = activity_grid)),
-      ai = purrr::map(group, function(x) { return(1:length(activity_grid)) })
-    ) %>% 
-    # These additions are also present in prepare_sim_data, but adding here in case user brings their own data
-    dplyr::group_by(group) %>% 
-    dplyr::mutate(
-      n = n()
-    ) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::mutate(
-      gamma = n / nrow(.) # indicates the proportion each group contributes to sample
+      Ta = purrr::map(.data[[activity_col]], 
+                      ~create_activity_profile(.x, 
+                                               activity_grid = activity_grid)),
+      ai = purrr::map(.data[[group_col]], function(x) { 
+        tibble::tibble( ai = 1:length(activity_grid) )
+        })
     )
-  
-  return(processed_data)
+
 }

@@ -6,7 +6,14 @@
 #' @return data with another column containing the scaled activity profiles
 #' @export
 #'
+#' @importFrom rlang .data
+#' @importFrom magrittr %>%
+#' @name %>%
+#'
 #' @examples
+#' a = 1 # First index
+#' scaled_profiles = mutate(data, a)
+#' 
 scale_activity_profile = function(data, a) {
   # Scale the activity profiles so that max range among profiles is 1
   # at a given activity index a
@@ -35,24 +42,22 @@ scale_activity_profile = function(data, a) {
   
   # Get the minimum and maximum from the activity profiles in each group for a given ai
   range_by_group_at_ai = data %>% 
-    dplyr::filter(ai == a) %>% 
-    dplyr::group_by(group) %>% 
+    dplyr::filter(.data$ai == a) %>% 
+    dplyr::group_by(.data$group) %>% 
     dplyr::summarize(
-      Ta_min = min(Ta),
-      Ta_max = max(Ta)
+      Ta_min = min(.data$Ta),
+      Ta_max = max(.data$Ta)
     )
   
   # Log the extremes of the activity profiles among groups
-  minmax_at_ai = range_by_group_at_ai %>% dplyr::pull(Ta_max) %>% min()
-  maxmin_at_ai = range_by_group_at_ai %>% dplyr::pull(Ta_min) %>% max()
+  minmax_at_ai = range_by_group_at_ai %>% dplyr::pull(.data$Ta_max) %>% min
+  maxmin_at_ai = range_by_group_at_ai %>% dplyr::pull(.data$Ta_min) %>% max
   
   # Scale the activity profiles at a to have range 1
-  scaled_data_at_ai = data %>% 
-    dplyr::filter(ai == a) %>% 
+  data %>% 
+    dplyr::filter(.data$ai == a) %>% 
     dplyr::mutate(
-      scaled_Ta = Ta / (minmax_at_ai - maxmin_at_ai)
+      scaled_Ta = .data$Ta / (minmax_at_ai - maxmin_at_ai)
     ) %>% 
-    dplyr::select(group, n, gamma, scaled_Ta)
-  
-  return(scaled_data_at_ai)
+    dplyr::select(.data$group, .data$n, .data$gamma, .data$scaled_Ta)
 }

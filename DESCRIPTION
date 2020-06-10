@@ -20,7 +20,9 @@ Imports:
     ESGtoolkit,
     magrittr,
     purrr,
+    rlang,
     rootSolve,
+    stats,
     tibble,
     tidyr
 Suggests:

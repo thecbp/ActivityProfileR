@@ -8,6 +8,9 @@
 #' @return A tibble of the activity for the sample
 #' @export
 #'
+#' @importFrom magrittr %>%
+#' @name %>%
+#'
 #' @examples
 #' params_by_group = list(
 #'   list(n_subj = 70, n_points = 1000, 
@@ -19,7 +22,9 @@
 #'  )
 #' sim_data = prepare_sim_data(params_by_group)
 #' 
-prepare_sim_data = function(group_params, quantiles = c(0.05, 0.95)) {
+prepare_sim_data = function(group_params, 
+                            group_col,
+                            quantiles = c(0.05, 0.95)) {
   # Creates a simulated dataset of activity data
   
   # Arguments:
@@ -44,15 +49,6 @@ prepare_sim_data = function(group_params, quantiles = c(0.05, 0.95)) {
   }
   
   # Add some useful columns for the analysis here
-  data = data %>% 
-    dplyr::group_by(group) %>% 
-    dplyr::mutate(
-      n = n()
-    ) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::mutate(
-      gamma = n / nrow(.) # indicates the proportion each group contributes to sample
-    )
-  
-  return(data)
+  data %>% 
+    add_helper_columns(group_col = group_col)
 }

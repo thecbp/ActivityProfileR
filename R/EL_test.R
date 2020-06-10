@@ -10,10 +10,16 @@
 #' @return a list contaning the results of the functional ANOVA test
 #' @export
 #'
+#' @importFrom rlang .data
+#' @importFrom magrittr %>%
+#' @name %>%
+#'
 #' @examples
 #' el = EL_test(sim_data)
 #' 
 EL_test = function(data, 
+                   activity_col,
+                   group_col,
                    grid_length = 100, 
                    n_boot = 1000, 
                    quantiles = c(0.05, 0.95), 
@@ -22,45 +28,35 @@ EL_test = function(data,
   # Calculates the empirical likelihood test statistic of the data
   # Data assumed to be nested at first
   
-  # Create an activity grid based off of the 
-  activity_grid = extract_activity_grid(data, 
-                                        quantiles = quantiles,
-                                        grid_length = grid_length)
-  
-  processed_data = data %>% 
-    dplyr::mutate(
-      Ta = purrr::map(Xt, ~create_activity_profile(.x, activity_grid = activity_grid)), 
-      ai = purrr::map(group, function(x) { return(1:length(activity_grid)) })
-    ) %>% 
-    dplyr::group_by(group) %>% 
-    dplyr::mutate(
-      n = n()
-    ) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::mutate(
-      # Add a gamma to indicate the proportion each group contributes to data
-      gamma = n / nrow(.)
-    ) %>% 
-    dplyr::select(-Xt)
-  
-  unnested_processed_data =  processed_data %>% tidyr::unnest(c(Ta, ai))
-  
+  # Add the activity profiles for each subject
+  data = data %>% 
+    add_activity_profile(.data, 
+                         activity_col = activity_col,
+                         group_col = group_col,
+                         quantiles = quantiles,
+                         grid_length = grid_length) %>% 
+    add_helper_columns(group_col = group_col) %>% 
+    tidyr::unnest(c(.data$Ta, .data$ai))
+
   # Calculate the -2logR(a) statistic for each activity index
   neg2logRa_tests = tibble::tibble(
     ai = 1:grid_length
   ) %>% 
     dplyr::mutate(
-      # confirmed correct: resulting scaled Ta is sensitive to the range
-      # which has been affected by the beta random vars
-      scaled_Ta_at_ai = purrr::map(ai, ~scale_activity_profile(unnested_processed_data, a = .x)), 
-      neg2logRa = map2(scaled_Ta_at_ai, ai, ~neg2logRa(data = .x, 
-                                                       a = .y, 
-                                                       verbose = verbose))
+      scaled_Ta_at_ai = purrr::map(.data$ai, 
+                                   ~scale_activity_profile(data, 
+                                                           a = .x)), 
+      neg2logRa = purrr::map2(.data$scaled_Ta_at_ai, 
+                              .data$ai, 
+                              ~neg2logRa(data = .x, 
+                                         a = .y, 
+                                         verbose = verbose))
     ) %>% 
-    dplyr::pull(neg2logRa) %>% unlist()
+    dplyr::pull(neg2logRa) %>% 
+    unlist()
   
   # Bootstrap the EL statistic through the uniform approximation U^2
-  bs = bootstrap_U_star(processed_data)
+  bs = bootstrap_U_star(data)
   sup_boot = bs %>% dplyr::pull(sup_boot)
   sup_EL_crit = quantile(sup_boot, alpha)
 

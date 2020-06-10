@@ -15,9 +15,6 @@ The purpose of this demo is to walk through how to use the functionality of our 
 # Set Up
 
 ```{r, warning =  FALSE, message = FALSE }
-library(tidyverse)  # For data manipulation (dplyr, tidyr, purrr)
-library(rootSolve)  # For root solving in -2logR(a)
-library(multidplyr) # for parallel processing
 library(ActivityProfileR)
 set.seed(8105)         # Keeping bootstrap samples consistent
 ```
@@ -43,11 +40,11 @@ params_by_group = list(
        scaling = 300, thetas = c(-0.201, 0.5, 1.18))
 )
 
-sim_data = prepare_sim_data(params_by_group)
+data = prepare_sim_data(params_by_group)
 ```
 
 ```{r, echo = FALSE}
-sim_data %>% 
+data %>% 
   unnest(Xt) %>% 
   filter(subject_id == 1, group == 1) %>% 
   mutate( ai = 1:1000) %>% 

@@ -7,6 +7,9 @@
 #' @return
 #' @export
 #'
+#' @importFrom magrittr %>%
+#' @name %>%
+#' 
 #' @examples
 neg2logRa = function(data, a, verbose = FALSE) {
   # Calculates the -2logR(a) test statistic for a given dataset and activity index
@@ -20,7 +23,7 @@ neg2logRa = function(data, a, verbose = FALSE) {
   mu_grid_length = 20
   lambda_grid_length = 20
   gammas_js = unique(data$n) / sum(unique(data$n))
-  n_groups = data %>% dplyr::pull(group) %>% unique() %>% length()
+  n_groups = data %>% dplyr::pull(.data$group) %>% unique() %>% length()
   conditions_met = FALSE # F if error in computing -2logR(a), R otherwise
   
   # 6 was the arbirtrary limit set in the original code
@@ -46,16 +49,16 @@ neg2logRa = function(data, a, verbose = FALSE) {
       current_params = mu_lambda_grid %>% 
         dplyr::slice(i) %>% 
         tidyr::pivot_longer(
-          cols = lambda1:lambda2,
+          cols = .data$lambda1:.data$lambda2,
           names_to = "lambda_j",
           values_to = "lambdas"
         ) %>% 
         dplyr::mutate(
-          lambda_js = cumsum(-lambdas)
+          lambda_js = cumsum(-.data$lambdas)
         )
       
-      current_mu = current_params %>% dplyr::pull(mu) %>% .[[1]]
-      current_lambda_js = current_params %>% dplyr::pull(lambda_js)
+      current_mu = current_params %>% dplyr::pull(.data$mu) %>% .data[[1]]
+      current_lambda_js = current_params %>% dplyr::pull(.data$lambda_js)
       current_gammas = gammas_js - diff(c(0, current_lambda_js, 0)) * -current_mu
       
       # Use the multiroot function to solve for the estimating equation
@@ -88,26 +91,36 @@ neg2logRa = function(data, a, verbose = FALSE) {
           group = 1:n_groups
         ) %>% 
           dplyr::mutate(
-            p = purrr::map(group, function(g) {
-              group_scaled_Ta = data %>% dplyr::filter(group == g) %>% dplyr::pull(scaled_Ta)
-              n = data %>% dplyr::pull(n) %>% unique() %>% sum()
+            p = purrr::map(.data$group, function(g) {
+              
+              group_scaled_Ta = data %>% 
+                dplyr::filter(.data$group == g) %>% dplyr::pull(.data$scaled_Ta)
+              
+              n = data %>% dplyr::pull(.data$n) %>% unique() %>% sum()
+              
               # This is the given calculation for p in the original code
               1 / (n * (root_gammas[g] + (root_lambdas_kp1[g] - root_lambdas_kp1[(g + 1)]) * group_scaled_Ta))
             }),
-            scaled_Ta = purrr::map(group, function(g) {
-              data %>% dplyr::filter(group == g) %>% dplyr::pull(scaled_Ta)
+            scaled_Ta = purrr::map(.data$group, function(g) {
+              data %>% 
+                dplyr::filter(.data$group == g) %>% 
+                dplyr::pull(.data$scaled_Ta)
             }),
-            Ta_p_prod = purrr::map2(group, p, function(g, ps) {
-              group_scaled_Ta = data %>% dplyr::filter(group == g) %>% dplyr::pull(scaled_Ta)
+            Ta_p_prod = purrr::map2(.data$group, .data$p, function(g, ps) {
+              
+              group_scaled_Ta = data %>% 
+                dplyr::filter(.data$group == g) %>% 
+                dplyr::pull(.data$scaled_Ta)
+              
               ps * group_scaled_Ta
             })
           ) %>% 
-          tidyr::unnest(c(p, scaled_Ta, Ta_p_prod))
+          tidyr::unnest(c(.data$p, .data$scaled_Ta, .data$Ta_p_prod))
         
         min_ps = group_ps %>%
-          dplyr::group_by(group) %>%
-          dplyr::summarize(min_p = min(p)) %>%
-          dplyr::pull(min_p)
+          dplyr::group_by(.data$group) %>%
+          dplyr::summarize(min_p = min(.data$p)) %>%
+          dplyr::pull(.data$min_p)
         
         # Condition checks
         precision_met = root$estim.precis < 10^(-8)
@@ -133,8 +146,12 @@ neg2logRa = function(data, a, verbose = FALSE) {
   # Return the optimized lambdas and gammas
   # With the optimized lambdas and gammas, calculate the -2logR(a) test statistic
   if (conditions_met) {
-    sum_log_ps = group_ps %>% dplyr::mutate( log_p = log(p) ) %>% dplyr::pull(log_p) %>% sum()
-    subjects_by_group = data %>% dplyr::pull(n) %>% unique()
+    sum_log_ps = group_ps %>% 
+      dplyr::mutate( log_p = log(.data$p) ) %>% 
+      dplyr::pull(.data$log_p) %>% sum()
+    
+    subjects_by_group = data %>% dplyr::pull(.data$n) %>% unique()
+    
     ts = -2 * sum_log_ps - 2 * sum(subjects_by_group * log(subjects_by_group))
     return(ts)
   } else {

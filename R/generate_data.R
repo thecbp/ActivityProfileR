@@ -11,7 +11,11 @@
 #'
 #' @return data containing the activity data
 #' @export
-#'
+#' 
+#' @importFrom rlang .data
+#' @importFrom magrittr %>%
+#' @name %>%
+#' 
 #' @examples
 #' # Generate data for a single group of subjects
 #' generate_data(n_subj = 70, group_id = 1, n_points = 1000, 
@@ -35,7 +39,7 @@ generate_data = function(n_subj, group_id, n_points, scaling, thetas) {
     group = rep(group_id, n_subj),
   ) %>% 
     dplyr::mutate(
-      Xt = purrr::map(group, function(i) { 
+      Xt = purrr::map(.data$group, function(i) { 
         
         # Unoptimal: simdiff doesn't allow just one simulation, 
         # so we make 2 and then just take the first one
@@ -50,7 +54,9 @@ generate_data = function(n_subj, group_id, n_points, scaling, thetas) {
         
         # Scaling the data to match a desired range (aka to NHANES)
         # Removing the first item because the process always starts at zero
-        scaling * c(pmax(t(sim[,1]), 0))[-1]
+        tibble::tibble(
+          Xt = scaling * c(pmax(t(sim[,1]), 0))[-1]
+        )
       })
     )
   
