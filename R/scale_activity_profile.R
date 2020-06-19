@@ -2,6 +2,7 @@
 #'
 #' @param data dataset containing the activity profiles
 #' @param a activity index that describes where in the activity profiles to filter
+#' @param group_col the column that contains the group ID column
 #'
 #' @return data with another column containing the scaled activity profiles
 #' @export

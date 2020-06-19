@@ -91,7 +91,7 @@ scale_activity_profile(data, a, group_col)
 
 \item{activity_col}{the name of the column that contains the activity data}
 
-\item{group_col}{the name of the column that contains the grouping label}
+\item{group_col}{the column that contains the group ID column}
 
 \item{grid_length}{number describing how long the activity grid should be}
 
@@ -194,7 +194,7 @@ params_by_group = list(
  )
 
 data = prepare_sim_data(params_by_group)
-el = EL_test(data)
+el = EL_test(data, activity_col = Xt, group_col = group)
 
 data = generate_data(n_subj = 70, group_id = 1, n_points = 1000, 
                      scaling = 300, thetas = c(-0.8, 2.0, 2.31))

@@ -1,6 +1,8 @@
 #' Calculates functional ANOVA test on activity profiles
 #'
 #' @param data dataset containing the activity profiles
+#' @param activity_col the column that contains the activity counts column
+#' @param group_col the column that contains the group ID column
 #' @param grid_length number describing how long the activity grid is
 #' @param n_boot number describing how many bootstrap datasets to make
 #' @param quantiles two percentiles describing what percentiles of activity points to keep in grid
@@ -25,7 +27,7 @@
 #'  )
 #' 
 #' data = prepare_sim_data(params_by_group)
-#' el = EL_test(data)
+#' el = EL_test(data, activity_col = Xt, group_col = group)
 #' 
 EL_test = function(data, 
                    activity_col,

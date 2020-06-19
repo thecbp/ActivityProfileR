@@ -20,20 +20,8 @@
 #' data = generate_data(n_subj = 70, group_id = 1, n_points = 1000, 
 #'                      scaling = 300, thetas = c(-0.8, 2.0, 2.31))
 generate_data = function(n_subj, group_id, n_points, scaling, thetas) {
-  # Generate data for n_subj subjects using an Ornstein-Uhlenbeck process
-  
-  # Arguments:
-  # n_subj: the number of subjects that we want to generate
-  # group_id: a number identifying the group of simulated subjects
-  # n_points: how long do we want the data to be for each subject
-  # scaling: an integer for scaling the initial data created by simdiff
-  # thetas: vector of 3 numbers for paramaterizing the Ornstein-Uhlenbeck process
-  
-  # Returns:
-  # a tibble containing n_subj rows, with an id and a list-col containing activity data
-  
-  # Each row represents the simulated activity data for a single person in the group
-  Xt = tibble::tibble(
+
+  tibble::tibble(
     subject_id = 1:n_subj,
     group = rep(group_id, n_subj),
   ) %>% 
@@ -58,6 +46,5 @@ generate_data = function(n_subj, group_id, n_points, scaling, thetas) {
         )
       })
     )
-  
-  return(Xt)
+
 }
