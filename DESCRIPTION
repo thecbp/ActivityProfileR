@@ -24,8 +24,10 @@ Imports:
     rootSolve,
     stats,
     tibble,
-    tidyr
+    tidyr,
+    tidyverse
 Suggests:
-    multidplyr
-VignetteBuilder: 
-    knitr
+    multidplyr,
+    knitr, 
+    rmarkdown
+VignetteBuilder: knitr

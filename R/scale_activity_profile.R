@@ -10,11 +10,9 @@
 #' @importFrom magrittr %>%
 #' @name %>%
 #'
-#' @examples
-#' a = 1 # First index
-#' scaled_profiles = mutate(data, a)
-#' 
-scale_activity_profile = function(data, a) {
+scale_activity_profile = function(data, 
+                                  a,
+                                  group_col) {
   # Scale the activity profiles so that max range among profiles is 1
   # at a given activity index a
   
@@ -39,11 +37,13 @@ scale_activity_profile = function(data, a) {
   #   }
   # } 
   
+  # Quoting the variables so we don't need to quote the variables in code
+  group_col = dplyr::enquo(group_col)
   
   # Get the minimum and maximum from the activity profiles in each group for a given ai
   range_by_group_at_ai = data %>% 
     dplyr::filter(.data$ai == a) %>% 
-    dplyr::group_by(.data$group) %>% 
+    dplyr::group_by(!!group_col) %>% 
     dplyr::summarize(
       Ta_min = min(.data$Ta),
       Ta_max = max(.data$Ta)

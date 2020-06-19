@@ -15,7 +15,17 @@
 #' @name %>%
 #'
 #' @examples
-#' el = EL_test(sim_data)
+#' params_by_group = list(
+#'   list(n_subj = 70, n_points = 1000, 
+#'       scaling = 300, thetas = c(-0.8, 2.0, 2.31)),
+#'  list(n_subj = 100, n_points = 1000, 
+#'       scaling = 300, thetas = c(-0.402, 1.0, 1.65)),
+#'  list(n_subj = 130, n_points = 1000, 
+#'       scaling = 300, thetas = c(-0.201, 0.5, 1.18))
+#'  )
+#' 
+#' data = prepare_sim_data(params_by_group)
+#' el = EL_test(data)
 #' 
 EL_test = function(data, 
                    activity_col,
@@ -25,17 +35,19 @@ EL_test = function(data,
                    quantiles = c(0.05, 0.95), 
                    alpha = 0.95,
                    verbose = FALSE) {
-  # Calculates the empirical likelihood test statistic of the data
-  # Data assumed to be nested at first
+  
+  # Quoting the variables so we don't need to quote the variables in code
+  activity_col = dplyr::enquo(activity_col)
+  group_col = dplyr::enquo(group_col)
   
   # Add the activity profiles for each subject
-  data = data %>% 
-    add_activity_profile(.data, 
-                         activity_col = activity_col,
-                         group_col = group_col,
+  processed_data = data %>% 
+    add_helper_columns(group_col = !!group_col) %>% 
+    add_activity_profile(activity_col = !!activity_col,
+                         group_col = !!group_col,
                          quantiles = quantiles,
                          grid_length = grid_length) %>% 
-    add_helper_columns(group_col = group_col) %>% 
+    dplyr::select(-!!activity_col) %>% # Remove original activity counts
     tidyr::unnest(c(.data$Ta, .data$ai))
 
   # Calculate the -2logR(a) statistic for each activity index
@@ -43,32 +55,38 @@ EL_test = function(data,
     ai = 1:grid_length
   ) %>% 
     dplyr::mutate(
+      # activity profiles at a given activity index should be scaled
+      # such that the max range is 1 
       scaled_Ta_at_ai = purrr::map(.data$ai, 
-                                   ~scale_activity_profile(data, 
-                                                           a = .x)), 
+                                   ~scale_activity_profile(processed_data, 
+                                                           a = .x,
+                                                           group_col = !!group_col)), 
+      # Need to calculate the neg2logR(a) for each activity index
+      # which we need to take the supremum over
       neg2logRa = purrr::map2(.data$scaled_Ta_at_ai, 
                               .data$ai, 
                               ~neg2logRa(data = .x, 
                                          a = .y, 
+                                         group_col = !!group_col,
                                          verbose = verbose))
     ) %>% 
     dplyr::pull(neg2logRa) %>% 
-    unlist()
+    unlist
   
-  # Bootstrap the EL statistic through the uniform approximation U^2
-  bs = bootstrap_U_star(data)
-  sup_boot = bs %>% dplyr::pull(sup_boot)
-  sup_EL_crit = quantile(sup_boot, alpha)
-
   # Capture the supremum of -2logR(a) across all activity indices
   sup_test = max(neg2logRa_tests)
   
-  return(list(
+  # Bootstrap the EL statistic through the uniform approximation U^2
+  bs = bootstrap_U_star(processed_data, group_col = !!group_col)
+  sup_boot = bs %>% dplyr::pull(sup_boot)
+  sup_EL_crit = quantile(sup_boot, alpha)
+  
+  list(
     sup_test = sup_test,
     sup_EL_crit = sup_EL_crit,
     out_sup_pval = mean(sup_boot >= sup_test),
     neg2logRa_tests = neg2logRa_tests,
     bootstrap = bs
-  ))
+  )
   
 }

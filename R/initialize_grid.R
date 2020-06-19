@@ -13,7 +13,6 @@
 #' @importFrom magrittr %>%
 #' @name %>%
 #'
-#' @examples
 initialize_grid = function(data,
                            mu_grid_length = 20,
                            lambda_grid_length = 20,

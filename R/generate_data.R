@@ -17,9 +17,8 @@
 #' @name %>%
 #' 
 #' @examples
-#' # Generate data for a single group of subjects
-#' generate_data(n_subj = 70, group_id = 1, n_points = 1000, 
-#'               scaling = 300, thetas = c(-0.8, 2.0, 2.31))
+#' data = generate_data(n_subj = 70, group_id = 1, n_points = 1000, 
+#'                      scaling = 300, thetas = c(-0.8, 2.0, 2.31))
 generate_data = function(n_subj, group_id, n_points, scaling, thetas) {
   # Generate data for n_subj subjects using an Ornstein-Uhlenbeck process
   

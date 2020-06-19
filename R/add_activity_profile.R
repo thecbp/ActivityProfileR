@@ -14,29 +14,29 @@
 #' @importFrom magrittr %>%
 #' @name %>%
 #'
-#' @examples
-#' processed_data = data %>% 
-#'   add_activity_profile(activity_col = "Xt", group_col = "group")
-#' 
 add_activity_profile = function(data, 
                                 activity_col, 
                                 group_col,
                                 grid_length = 100, 
                                 quantiles = c(0.05, 0.95)) {
   
+  # Quoting the variables so we don't need to quote the variables in code
+  activity_col = dplyr::enquo(activity_col)
+  group_col = dplyr::enquo(group_col)
+  
   activity_grid = extract_activity_grid(data, 
-                                        activity_col = activity_col,
-                                        group_col = group_col,
+                                        activity_col = !!activity_col,
+                                        group_col = !!group_col,
                                         grid_length = grid_length,
                                         quantiles = quantiles)
   
   data %>% 
     dplyr::mutate(
-      Ta = purrr::map(.data[[activity_col]], 
+      Ta = purrr::map(!!activity_col, 
                       ~create_activity_profile(.x, 
                                                activity_grid = activity_grid)),
-      ai = purrr::map(.data[[group_col]], function(x) { 
-        tibble::tibble( ai = 1:length(activity_grid) )
+      ai = purrr::map(!!group_col, function(x) { 
+        tibble::tibble( ai = 1:grid_length )
         })
     )
 

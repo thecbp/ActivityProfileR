@@ -14,9 +14,6 @@
 #' @importFrom magrittr %>%
 #' @name %>%
 #'
-#' @examples
-#' par_el = EL_test_parallel(sim_data, n_cores = n_cores)
-#' 
 EL_test_parallel = function(data, 
                             activity_col,
                             group_col,

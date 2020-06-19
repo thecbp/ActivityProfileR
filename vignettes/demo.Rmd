@@ -1,5 +1,5 @@
 ---
-title: "An introduction to ActivityProfileR"
+title: "An Introduction to ActivityProfileR"
 author: "Christian Pascual"
 output: rmarkdown::html_vignette
 vignette: >
@@ -15,8 +15,9 @@ The purpose of this demo is to walk through how to use the functionality of our 
 # Set Up
 
 ```{r, warning =  FALSE, message = FALSE }
+library(tidyverse)
 library(ActivityProfileR)
-set.seed(8105)         # Keeping bootstrap samples consistent
+set.seed(8105) # Keeping bootstrap samples consistent
 ```
 
 # Simulating Data
@@ -40,60 +41,54 @@ params_by_group = list(
        scaling = 300, thetas = c(-0.201, 0.5, 1.18))
 )
 
-data = prepare_sim_data(params_by_group)
+data = params_by_group %>% 
+  prepare_sim_data
 ```
 
-```{r, echo = FALSE}
+`prepare_sim_data()` creates a simulated dataset of activity for a prescribed number of groups. Activity counts are simulated through an Ornstein-Uhlenbeck process. We can take a look at an example of a subject's simulated activity data below:
+
+```{r}
 data %>% 
   unnest(Xt) %>% 
   filter(subject_id == 1, group == 1) %>% 
-  mutate( ai = 1:1000) %>% 
-  ggplot(aes(x = ai, y = Xt)) +
-  geom_point() +
+  mutate( t = 1:1000 ) %>% # same as n_points in group_params above
+  ggplot(aes(x = t, y = Xt)) +
+  geom_line() +
   labs(
-    title = "Sample of a subject's activity data",
-    x = "Time",
+    title = "Sample of a subject's simulated activity data",
+    x = "Time (t)",
     y = "Activity (steps)"
   )
 ```
 
-The resulting dataset in `sim_data` contains a subject ID, a group ID, and the acceleometer data for each person.
-
-```{r, echo = FALSE}
-head(sim_data)
-```
+`prepare_sim_data()` uses the index in the `params_by_group` list to designate a group ID column. `prepare_sim_data()` uses `group` to name the group ID column. Activity data is put in the `Xt` column as a nested tibble. `ActivityProfileR` assumes that any **user-specified data** has the same form as the  `data` created by `prepare_sim_data()`.
 
 # Producing The Activity Profle $T(\alpha)$
 
-A functional ANOVA test described in the original manuscript looks at activity profiles, denoted $T(\alpha)$ instead of the activity data $X(t)$. The code below uses the `create_activity_profile` function to make $T(\alpha)$ for each subject. In order to create $T(\alpha)$, we need to extract a grid of activity (step) values that will work across all the groups. This is what `extract_activity_grid` is doing. We also adds some additional columns to the processed data that help with calculating the test later on. 
+The functional ANOVA test described in the original manuscript takes the original activity data, denoted as $X(t)$, and converts them into activity profiles, denoted $T(\alpha)$. Activity profiles are monotonically decreasing functions, where a single point represents the proportion of data points greater than a given activity value.
 
 ```{r}
-activity_grid = extract_activity_grid(sim_data, 
-                                      quantiles = c(0.05, 0.95),
-                                      grid_length = 100)
+processed_data = data %>% 
+  add_helper_columns(group_col = group) %>% 
+  add_activity_profile(group_col = group, activity_col = Xt)
 ```
 
-```{r, echo = FALSE }
-print(paste0(activity_grid[1], " is the first value in the grid"))
-print(paste0(round(activity_grid[100], 1), " is the last value in the grid"))
-```
+The `add_helper_columns()` function adds some columns that help in the calculation of the statistical test. Specifically, it adds a column `n` that represents how many subjects have a specific group ID and column `gamma`, which represents the proportion that a group ID is of the entire sample.
 
-The `EL_test()` function does the following internally, but you can also use the `add_activity_profile()` function on the data if you want to visualize the activity profiles.
+The `add_activity_profile()` constructs the activity profiles for each subject. These activity profiles depend on the activity values across all groups, so this information needs to be supplied to the function. Thanks to tidyeval, you do not need to specify the column names as a string. In the simulated dataset, the group column is represented as `group` and activity column as `Xt`, so this should be adjusted to the input data as needed. `add_activity_profile()` also adds a column `ai`, which stands for activity index. Since activity values can differ across dataset, these activity indices are used as a placeholder. The first value, `ai = 1`, represents the 5th percentile of all activity values in the entire sample, while the last `ai` represents the 95th percentile (per the specifications of the maniscript).
 
-```{r}
-processed_sim_data = add_activity_profile(sim_data, activity_grid)
-```
-
-The end result is that each of the activity profiles have been created for each subject across all groups.
+The end result is that activity profiles have been created for each subject across all groups:
 
 ```{r, echo = FALSE}
-head(processed_sim_data)
+head(processed_data)
 ```
+
+# Visualizing $T(\alpha)$
 
 We can visualize the activity profiles for each group by unnesting the data and plotting by group.
 
-```{r, echo = FALSE}
-processed_sim_data %>% 
+```{r}
+processed_data %>% 
   unnest(c(Ta, ai)) %>% 
   ggplot(aes(x = ai, y = Ta, group = subject_id, color = factor(group))) + 
   geom_line(alpha = 0.3) + 
@@ -108,16 +103,18 @@ processed_sim_data %>%
 
 # Calculating Functional ANOVA Test
 
-The processing done above is already packed into the `EL_test` function that performs the test. All you need to do is pass in this data into the function.
+The functions above are used internally in the `EL_test()`, which calculates the statistical test. 
 
 ```{r, message = FALSE, warning = FALSE }
-start_time = Sys.time()
-el = EL_test(sim_data)
-end_time = Sys.time()
-print(paste0("Non-parallel version took ", round(end_time - start_time, 2), " minutes to run."))
+start = Sys.time()
+el = data %>% EL_test(group_col = group, activity_col = Xt)
+end = Sys.time()
+paste0("Regular version of EL_test() took ", 
+       round(end - start, 1), 
+       " minutes to run.") %>% print
 ```
 
-The output of `EL_test` is a list of values associated with the functional ANOVA test. 
+The output of `EL_test()` is a list of values associated with the functional ANOVA test. 
 
 - `sup_test`: This is the supremum of all of the $-2log(\alpha)$ values calculated for each activity index $\alpha$.
 - `sup_EL_crit`: This is the 95% quantile of the bootstrap statistics calculated on the data.
@@ -131,20 +128,3 @@ el$sup_test
 el$sup_EL_crit
 el$out_sup_pval
 ```
-
-# Parallelized Version of the EL Test
-
-There is also a parallelized version of the test that helps speed up the process. It uses `multidplyr`.
-
-```{r}
-# Example case of using the parallelized version of the test
-
-# Determine the number of cores to use in parallelized version of functions
-n_cores = parallel::detectCores() - 2
-
-start_time = Sys.time()
-par_el = EL_test_parallel(sim_data, n_cores = n_cores)
-end_time = Sys.time()
-print(paste0("Parallel version took ", round(end_time - start_time, 2), " minutes to run."))
-```
-

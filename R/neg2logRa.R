@@ -10,9 +10,14 @@
 #' @importFrom magrittr %>%
 #' @name %>%
 #' 
-#' @examples
-neg2logRa = function(data, a, verbose = FALSE) {
+neg2logRa = function(data, 
+                     a, 
+                     group_col,
+                     verbose = FALSE) {
   # Calculates the -2logR(a) test statistic for a given dataset and activity index
+  
+  # Quoting the variables so we don't need to quote the variables in code
+  group_col = dplyr::enquo(group_col)
   
   # Progress bar since function is slow
   if (verbose) { print(paste0("Activity index: ", a))  }
@@ -23,7 +28,7 @@ neg2logRa = function(data, a, verbose = FALSE) {
   mu_grid_length = 20
   lambda_grid_length = 20
   gammas_js = unique(data$n) / sum(unique(data$n))
-  n_groups = data %>% dplyr::pull(.data$group) %>% unique() %>% length()
+  n_groups = data %>% dplyr::pull(!!group_col) %>% unique() %>% length()
   conditions_met = FALSE # F if error in computing -2logR(a), R otherwise
   
   # 6 was the arbirtrary limit set in the original code
@@ -57,9 +62,9 @@ neg2logRa = function(data, a, verbose = FALSE) {
           lambda_js = cumsum(-.data$lambdas)
         )
       
-      current_mu = current_params %>% dplyr::pull(.data$mu) %>% .data[[1]]
+      current_mu = current_params %>% dplyr::pull(.data$mu)
       current_lambda_js = current_params %>% dplyr::pull(.data$lambda_js)
-      current_gammas = gammas_js - diff(c(0, current_lambda_js, 0)) * -current_mu
+      current_gammas = gammas_js - diff(c(0, current_lambda_js, 0)) * -current_mu[1]
       
       # Use the multiroot function to solve for the estimating equation
       # Note to self: Why do we need to watch out for the error?
@@ -109,7 +114,7 @@ neg2logRa = function(data, a, verbose = FALSE) {
             Ta_p_prod = purrr::map2(.data$group, .data$p, function(g, ps) {
               
               group_scaled_Ta = data %>% 
-                dplyr::filter(.data$group == g) %>% 
+                dplyr::filter(!!group_col == g) %>% 
                 dplyr::pull(.data$scaled_Ta)
               
               ps * group_scaled_Ta

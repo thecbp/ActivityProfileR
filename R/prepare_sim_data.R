@@ -20,18 +20,11 @@
 #'  list(n_subj = 130, n_points = 1000, 
 #'       scaling = 300, thetas = c(-0.201, 0.5, 1.18))
 #'  )
-#' sim_data = prepare_sim_data(params_by_group)
+#' 
+#' data = prepare_sim_data(params_by_group)
 #' 
 prepare_sim_data = function(group_params, 
-                            group_col,
                             quantiles = c(0.05, 0.95)) {
-  # Creates a simulated dataset of activity data
-  
-  # Arguments:
-  # group_params: list of lists of the diffrent parameters desired for each group
-  #               each [[i]] of group_params should have the following parameters:
-  #               - n_subj, group_id, n_points, scaling, thetas
-  # activity_grid: a vector describing the desired activity grid for the data
   
   n_groups = length(group_params)
   data = NULL
@@ -48,7 +41,5 @@ prepare_sim_data = function(group_params,
     )
   }
   
-  # Add some useful columns for the analysis here
-  data %>% 
-    add_helper_columns(group_col = group_col)
+  data
 }
