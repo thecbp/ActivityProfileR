@@ -9,7 +9,6 @@
 #' @export
 #'
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 #' @examples
 #' params_by_group = list(

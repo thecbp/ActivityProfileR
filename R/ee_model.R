@@ -7,7 +7,6 @@
 #' @export
 #'
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 ee_model = function(lambda_gamma, data) {
   # Computes estimating equations in -2logR(a) calculation

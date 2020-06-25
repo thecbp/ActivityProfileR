@@ -8,7 +8,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 create_activity_profile = function(activity, activity_grid) {
   

@@ -14,7 +14,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 #' @examples
 #' params_by_group = list(

@@ -12,7 +12,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 EL_test_parallel = function(data, 
                             activity_col,

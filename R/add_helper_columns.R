@@ -9,7 +9,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 add_helper_columns = function(data, group_col) {
   

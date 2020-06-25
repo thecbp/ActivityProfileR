@@ -8,7 +8,6 @@
 #' @export
 #'
 #' @importFrom magrittr %>%
-#' @name %>%
 #' 
 neg2logRa = function(data, 
                      a, 

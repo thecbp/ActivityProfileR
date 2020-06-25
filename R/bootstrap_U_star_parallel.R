@@ -9,7 +9,6 @@
 #' 
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 bootstrap_U_star_parallel = function(data, n_boot = 1000, n_cores = 2) {
   # Bootstraps the calculation of the empricial likelihood test statistic using parallel processing

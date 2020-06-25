@@ -20,7 +20,6 @@
 #' @importFrom rlang .data
 #' @importFrom stats quantile
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 extract_activity_grid = function(data, 
                                  activity_col,

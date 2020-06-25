@@ -14,7 +14,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 bootstrap_U_star = function(data, 
                             group_col,

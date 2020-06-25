@@ -9,7 +9,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 scale_activity_profile = function(data, 
                                   a,

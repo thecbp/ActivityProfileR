@@ -11,7 +11,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 initialize_grid = function(data,
                            mu_grid_length = 20,

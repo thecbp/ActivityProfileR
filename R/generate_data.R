@@ -14,7 +14,6 @@
 #' 
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #' 
 #' @examples
 #' data = generate_data(n_subj = 70, group_id = 1, n_points = 1000, 

@@ -12,7 +12,6 @@
 #'
 #' @importFrom rlang .data
 #' @importFrom magrittr %>%
-#' @name %>%
 #'
 add_activity_profile = function(data, 
                                 activity_col, 
