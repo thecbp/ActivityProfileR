@@ -1,8 +1,9 @@
 #' Calculates functional ANOVA test on activity profiles
 #'
 #' @param data dataset containing the activity profiles
-#' @param activity_col the column that contains the activity counts column
+#' @param id_col the column that contains the subject ID column
 #' @param group_col the column that contains the group ID column
+#' @param activity_col the column that contains the activity counts column
 #' @param grid_length number describing how long the activity grid is
 #' @param n_boot number describing how many bootstrap datasets to make
 #' @param quantiles two percentiles describing what percentiles of activity points to keep in grid
@@ -26,11 +27,12 @@
 #'  )
 #' 
 #' data = prepare_sim_data(params_by_group)
-#' el = EL_test(data, activity_col = Xt, group_col = group)
+#' el = EL_test(data, id_col = subject_id, group_col = group, activity_col = Xt)
 #' 
 EL_test = function(data, 
-                   activity_col,
+                   id_col,
                    group_col,
+                   activity_col,
                    grid_length = 100, 
                    n_boot = 1000, 
                    quantiles = c(0.05, 0.95), 
@@ -38,8 +40,9 @@ EL_test = function(data,
                    verbose = FALSE) {
   
   # Quoting the variables so we don't need to quote the variables in code
-  activity_col = dplyr::enquo(activity_col)
+  id_col = dplyr::enquo(id_col)
   group_col = dplyr::enquo(group_col)
+  activity_col = dplyr::enquo(activity_col)
   
   # Add the activity profiles for each subject
   processed_data = data %>% 
@@ -78,7 +81,9 @@ EL_test = function(data,
   sup_test = max(neg2logRa_tests)
   
   # Bootstrap the EL statistic through the uniform approximation U^2
-  bs = bootstrap_U_star(processed_data, group_col = !!group_col)
+  bs = bootstrap_U_star(processed_data, 
+                        id_col = !!id_col, 
+                        group_col = !!group_col)
   sup_boot = bs %>% dplyr::pull(sup_boot)
   sup_EL_crit = quantile(sup_boot, alpha)
   

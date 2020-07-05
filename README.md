@@ -2,27 +2,21 @@
 
 ## Overview
 
-ActivityProfileR is an implementation of the functional ANOVA test for activity data described in *Nonparametric comparisons of activity profiles from wearable device data* by Hsin-wen Chang and Professor Ian McKeague. A presentation on the original paper can be found [here](https://www.ima.umn.edu/materials/2019-2020/DW9.16-17.19/28237/talk_Minneapolis.pdf). Once your data is in the correct format (described below), you can pass it into `EL_test()`, and it will conduct the statistical test for you. 
-
-ActivityProfileR uses the tidyverse libraries for data cleaning and manipulation. There is also a paralellized version of the test in `EL_test_parallel()` available using multidplyr.
-
-The statistical test can take a while to run, so parallelizaiton is recommended.
+ActivityProfileR is an implementation of the functional ANOVA test for activity data described in *Nonparametric comparisons of activity profiles from wearable device data* by Hsin-wen Chang and Professor Ian McKeague. A presentation on the original paper can be found [here](https://www.ima.umn.edu/materials/2019-2020/DW9.16-17.19/28237/talk_Minneapolis.pdf).  
 
 ## Installation
 
 ```
-# install.packages("devtools")
-devtools::install_github("ActivityProfileR")
+# install.packages("remotes")
+remotes::install_github("thecbp/ActivityProfileR")
 ```
 
 ## Usage
 
-To use ActivityProfileR, you must first get your activity data into the correct format. You can use `prepare_sim_data()` function to create an example of the data `EL_test()` expects. The `prepare_sim_data()` expects a list of lists, each of these lists contains parameters for a specific group that you want to appear in the data. Activity data is generated through an Ornstein-Uhlenbeck process (implemented in the `ESGtoolkit` package).
+To use `ActivityProfileR`, the package expects activity data in a particular format. You can see an example of this data format using the `prepare_sim_data()` function. The `prepare_sim_data()` expects a list of lists, where each inner lists contains parameters for a group you want to appear in the data. Activity data is generated through an Ornstein-Uhlenbeck process (implemented in the `ESGtoolkit` package).
 
 ```
-library(tidyverse)
 library(ActivityProfileR)
-set.seed(1) # Package uses bootstrapping, so seed for consistency
 
 # Generate data for 3 groups with different characteristics
 params_by_group = list(
@@ -50,18 +44,23 @@ head(data)
 ## 6          6     1 <dbl [1,000]>
 ```
 
-Your data needs to have three columns with the following information:
+Your data should have the following information:
 
-- `subject_id` identifies a subject's ID *within* their group. 
-  - Note that the number `1` identifies the first person in a group, so there should be multiple `1` in this column, and so on.
-- `group` identifies the group that a subject is in
-- `Xt` is a list-column containing the activity data for each subject. 
+- `subject_id` identifies a subject's ID within their group. For example, the number `1` will identify the first person in a group, so there should be multiple `1` in this column, and so on.
+- `group` identifies the group ID that a subject is in
+- `Xt` contains the activity data for each subject, nested for each 
 
-Now that the data is created, it can be passed into the `EL_test()` function to perform the test.
+You will need to provide the names of the columns that contain this corresponding information in your data (subject ID, group ID, activity data). Once your data is in this format, it can be passed into the `EL_test()` function to perform the test.
 
 ```
+# Test uses bootstrapping, so set seed for consistency
+set.seed(1)
+
 # Conduct the functional ANOVA test
-el = EL_test(data)
+el = data %>% 
+  EL_test(id_col = subject_id,
+          group_col = group,
+          activity_col = Xt)
 ```
 
-The test uses bootstrap and uses optimization, so it can take a while to run, about 4 minutes. See `vignettes("demo")` for more details.
+The test uses bootstrap and uses optimization, so it can take a while to run. See `vignettes("demo")` for more details.
