@@ -17,7 +17,6 @@ The purpose of this demo is to walk through how to use the functionality of our 
 ```{r, warning =  FALSE, message = FALSE }
 library(tidyverse)
 library(ActivityProfileR)
-set.seed(8105) # Keeping bootstrap samples consistent
 ```
 
 # Simulating Data
@@ -70,12 +69,15 @@ The functional ANOVA test described in the original manuscript takes the origina
 ```{r}
 processed_data = data %>% 
   add_helper_columns(group_col = group) %>% 
-  add_activity_profile(group_col = group, activity_col = Xt)
+  add_activity_profile(group_col = group, 
+                       activity_col = Xt,
+                       grid_length = 100, 
+                       quantiles = c(0.05, 0.95))
 ```
 
 The `add_helper_columns()` function adds some columns that help in the calculation of the statistical test. Specifically, it adds a column `n` that represents how many subjects have a specific group ID and column `gamma`, which represents the proportion that a group ID is of the entire sample.
 
-The `add_activity_profile()` constructs the activity profiles for each subject. These activity profiles depend on the activity values across all groups, so this information needs to be supplied to the function. Thanks to tidyeval, you do not need to specify the column names as a string. In the simulated dataset, the group column is represented as `group` and activity column as `Xt`, so this should be adjusted to the input data as needed. `add_activity_profile()` also adds a column `ai`, which stands for activity index. Since activity values can differ across dataset, these activity indices are used as a placeholder. The first value, `ai = 1`, represents the 5th percentile of all activity values in the entire sample, while the last `ai` represents the 95th percentile (per the specifications of the maniscript).
+The `add_activity_profile()` constructs the activity profiles for each subject. These activity profiles depend on the activity values across all groups, so this information needs to be supplied to the function. Thanks to tidyeval, you do not need to specify the column names as a string. In the simulated dataset, the group column is represented as `group` and activity column as `Xt`, so this should be adjusted to the input data as needed. `add_activity_profile()` also adds a column `ai`, which stands for activity index. Since activity values can differ across dataset, these activity indices are used as a placeholder. `grid_length` and `quantiles` are optional arguments that you can supply to `add_activity_profile` if you wish to change the amount of activity values to use or change the quantiles kept. The first value, `ai = 1`, will represent the 5th percentile of all activity values in the entire sample, while the last `ai = 100` will represent the 95th percentile (per the specifications of the manuscript).
 
 The end result is that activity profiles have been created for each subject across all groups:
 
@@ -97,7 +99,7 @@ processed_data %>%
   labs(
     title = "Activity profiles for each subject by group",
     x = "Activity index alpha",
-    y = "Proportion of data that exceeds activity at index alpha"
+    y = "Proportion of data that exceeds\nactivity at index alpha"
   )
 ```
 
@@ -107,7 +109,10 @@ The functions above are used internally in the `EL_test()`, which calculates the
 
 ```{r, message = FALSE, warning = FALSE }
 start = Sys.time()
-el = data %>% EL_test(group_col = group, activity_col = Xt)
+el = processed_data %>% 
+  EL_test(id_col = subject_id,
+          group_col = group, 
+          activity_col = Xt)
 end = Sys.time()
 paste0("Regular version of EL_test() took ", 
        round(end - start, 1), 

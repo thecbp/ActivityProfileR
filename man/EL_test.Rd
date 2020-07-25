@@ -6,8 +6,9 @@
 \usage{
 EL_test(
   data,
-  activity_col,
+  id_col,
   group_col,
+  activity_col,
   grid_length = 100,
   n_boot = 1000,
   quantiles = c(0.05, 0.95),
@@ -18,9 +19,11 @@ EL_test(
 \arguments{
 \item{data}{dataset containing the activity profiles}
 
-\item{activity_col}{the column that contains the activity counts column}
+\item{id_col}{the column that contains the subject ID column}
 
 \item{group_col}{the column that contains the group ID column}
+
+\item{activity_col}{the column that contains the activity counts column}
 
 \item{grid_length}{number describing how long the activity grid is}
 
@@ -49,6 +52,6 @@ params_by_group = list(
  )
 
 data = prepare_sim_data(params_by_group)
-el = EL_test(data, activity_col = Xt, group_col = group)
+el = EL_test(data, id_col = subject_id, group_col = group, activity_col = Xt)
 
 }

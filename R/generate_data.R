@@ -19,31 +19,41 @@
 #' data = generate_data(n_subj = 70, group_id = 1, n_points = 1000, 
 #'                      scaling = 300, thetas = c(-0.8, 2.0, 2.31))
 generate_data = function(n_subj, group_id, n_points, scaling, thetas) {
-
-  tibble::tibble(
+  
+  # Set up tibble for group
+  data = tibble::tibble(
     subject_id = 1:n_subj,
-    group = rep(group_id, n_subj),
-  ) %>% 
-    dplyr::mutate(
-      Xt = purrr::map(.data$group, function(i) { 
-        
-        # Unoptimal: simdiff doesn't allow just one simulation, 
-        # so we make 2 and then just take the first one
-        sim = ESGtoolkit::simdiff(n = 2, 
-                                  horizon = n_points, 
-                                  frequency = "annual", 
-                                  model = "OU", 
-                                  x0 = 0, 
-                                  theta1 = thetas[1], 
-                                  theta2 = thetas[2], 
-                                  theta3 = thetas[3])
-        
-        # Scaling the data to match a desired range (aka to NHANES)
-        # Removing the first item because the process always starts at zero
-        tibble::tibble(
-          Xt = scaling * c(pmax(t(sim[,1]), 0))[-1]
-        )
-      })
-    )
-
+    group = rep(group_id, n_subj)
+  )
+  
+  # Simulate a tibble with each row being a subject's activity data
+  activity_data = ESGtoolkit::simdiff(n = n_subj, 
+                                      horizon = n_points, 
+                                      frequency = "annual", 
+                                      model = "OU", 
+                                      x0 = 0, 
+                                      theta1 = thetas[1], 
+                                      theta2 = thetas[2], 
+                                      theta3 = thetas[3])
+  
+  activity_data = scaling * pmax(t(activity_data), 0) %>% 
+    tibble::as_tibble() %>% 
+    dplyr::select(-.data$V1) # We don't need the first point since 0 for everyone
+  
+  last_col = paste0("V", n_points + 1)
+  
+  # Construct final dataset from group data and activity
+  final_data = dplyr::bind_cols(data, activity_data) %>% 
+    tidyr::pivot_longer(
+      cols = .data$V2:.data[[last_col]],
+      names_to = "time",
+      values_to = "Xt"
+    ) %>% 
+    dplyr::select(-.data$time) %>% 
+    tidyr::nest(data = c(.data$Xt)) %>% 
+    dplyr::select(.data$subject_id, .data$group, Xt = data)
+  
+  
+  return(final_data)
+  
 }

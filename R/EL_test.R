@@ -46,11 +46,6 @@ EL_test = function(data,
   
   # Add the activity profiles for each subject
   processed_data = data %>% 
-    add_helper_columns(group_col = !!group_col) %>% 
-    add_activity_profile(activity_col = !!activity_col,
-                         group_col = !!group_col,
-                         quantiles = quantiles,
-                         grid_length = grid_length) %>% 
     dplyr::select(-!!activity_col) %>% # Remove original activity counts
     tidyr::unnest(c(.data$Ta, .data$ai))
 
@@ -67,15 +62,14 @@ EL_test = function(data,
                                                            group_col = !!group_col)), 
       # Need to calculate the neg2logR(a) for each activity index
       # which we need to take the supremum over
-      neg2logRa = purrr::map2(.data$scaled_Ta_at_ai, 
-                              .data$ai, 
-                              ~neg2logRa(data = .x, 
-                                         a = .y, 
-                                         group_col = !!group_col,
-                                         verbose = verbose))
+      neg2logRa = purrr::map2_dbl(.data$scaled_Ta_at_ai, 
+                                  .data$ai, 
+                                  ~neg2logRa(data = .x, 
+                                             a = .y, 
+                                             group_col = !!group_col,
+                                             verbose = verbose))
     ) %>% 
-    dplyr::pull(neg2logRa) %>% 
-    unlist
+    dplyr::pull(neg2logRa)
   
   # Capture the supremum of -2logR(a) across all activity indices
   sup_test = max(neg2logRa_tests)

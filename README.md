@@ -50,6 +50,15 @@ Your data should have the following information:
 - `group` identifies the group ID that a subject is in
 - `Xt` contains the activity data for each subject, nested for each 
 
+After getting your data into this format, you will need to use the `add_helper_columns()` and `add_activity_profile()` functions to further process the data. `add_helper_columns()` helps add some useful columns for later analysis, and `add_activity_profile()` creates a column that converts the raw activity data into the activity profile that is the crux of the test.
+
+```
+processed_data = data %>% 
+    add_helper_columns(group_col = group) %>% 
+    add_activity_profile(group_col = group, 
+                         activity_col = Xt)
+```
+
 You will need to provide the names of the columns that contain this corresponding information in your data (subject ID, group ID, activity data). Once your data is in this format, it can be passed into the `EL_test()` function to perform the test.
 
 ```
@@ -57,7 +66,7 @@ You will need to provide the names of the columns that contain this correspondin
 set.seed(1)
 
 # Conduct the functional ANOVA test
-el = data %>% 
+el = processed_data %>% 
   EL_test(id_col = subject_id,
           group_col = group,
           activity_col = Xt)
