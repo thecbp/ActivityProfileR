@@ -21,33 +21,16 @@ library(ActivityProfileR)
 
 # Simulating Data
 
-For this demo, we will generate accelerometer data for three independent groups of subjects. Accelerometer data is simulated by taking the positive components of a Ornstein-Uhlenbeck process. The `prepare_sim_data()` function will generate the data, given some group parameters. Each group's set of parameters should be given as a list with the following components:
-
-- `n_subj`: how many subjects should be a part of this group?
-- `group_id`: a number that uniquely identifies the group in the whole sample
-- `n_points`: how many accelerometer data points should we generate for each person?
-- `scaling`: what factor should we scale the resulting accelerometer data?
-- `thetas`: a 3-length vector describing what thetas should be passed into `ESGtoolkit::simdiff`, which is what generates the accelerometer data
+For this demo, we will generate accelerometer data for three independent groups of subjects. Accelerometer data is simulated by taking the positive components of a Ornstein-Uhlenbeck process. These data were generated using a now-defunct package, and we simply load a saved version of the data instead.
 
 ```{r}
-# Set up the group parameters as a list of lists
-params_by_group = list(
-  list(n_subj = 70, n_points = 1000, 
-       scaling = 300, thetas = c(-0.8, 2.0, 2.31)),
-  list(n_subj = 100, n_points = 1000,
-       scaling = 300, thetas = c(-0.402, 1.0, 1.65)),
-  list(n_subj = 130, n_points = 1000, 
-       scaling = 300, thetas = c(-0.201, 0.5, 1.18))
-)
-
-data = params_by_group %>% 
-  prepare_sim_data
+data(example_activity)
 ```
 
-`prepare_sim_data()` creates a simulated dataset of activity for a prescribed number of groups. Activity counts are simulated through an Ornstein-Uhlenbeck process. We can take a look at an example of a subject's simulated activity data below:
+We can take a look at an example of a subject's simulated activity data below:
 
 ```{r}
-data %>% 
+example_activity %>% 
   unnest(Xt) %>% 
   filter(subject_id == 1, group == 1) %>% 
   mutate( t = 1:1000 ) %>% # same as n_points in group_params above
@@ -67,7 +50,7 @@ data %>%
 The functional ANOVA test described in the original manuscript takes the original activity data, denoted as $X(t)$, and converts them into activity profiles, denoted $T(\alpha)$. Activity profiles are monotonically decreasing functions, where a single point represents the proportion of data points greater than a given activity value.
 
 ```{r}
-processed_data = data %>% 
+processed_data = example_activity %>% 
   add_helper_columns(group_col = group) %>% 
   add_activity_profile(group_col = group, 
                        activity_col = Xt,

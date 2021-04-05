@@ -18,21 +18,13 @@ To use `ActivityProfileR`, the package expects activity data in a particular for
 ```
 library(ActivityProfileR)
 
-# Generate data for 3 groups with different characteristics
-params_by_group = list(
-  list(n_subj = 70, n_points = 1000, 
-       scaling = 300, thetas = c(-0.8, 2.0, 2.31)),
-  list(n_subj = 100, n_points = 1000, 
-       scaling = 300, thetas = c(-0.402, 1.0, 1.65)),
-  list(n_subj = 130, n_points = 1000, 
-       scaling = 300, thetas = c(-0.201, 0.5, 1.18))
-)
+# Load data for 3 groups with different characteristics
 
-data = prepare_sim_data(params_by_group)
+data(example_activity)
 ```
 
 ```
-head(data)
+head(example_activity)
 ## # A tibble: 6 x 3
 ##   subject_id group Xt           
 ##        <int> <dbl> <list>       
@@ -53,7 +45,7 @@ Your data should have the following information:
 After getting your data into this format, you will need to use the `add_helper_columns()` and `add_activity_profile()` functions to further process the data. `add_helper_columns()` helps add some useful columns for later analysis, and `add_activity_profile()` creates a column that converts the raw activity data into the activity profile that is the crux of the test.
 
 ```
-processed_data = data %>% 
+processed_data = example_activity %>% 
     add_helper_columns(group_col = group) %>% 
     add_activity_profile(group_col = group, 
                          activity_col = Xt)
