@@ -99,6 +99,7 @@ initialize_grid = function(data,
       }),
       valid_lambdas = purrr::map2(.data$limits, 
                                   .data$lambdas, function(lims, lams) {
+                                    
         # Set up vectors for combination and matching against 3rd group limits
         g1_lambdas = lams %>% 
           dplyr::filter(.data$group == 1) %>% dplyr::pull(.data$grid)
