@@ -22,14 +22,14 @@
 #' 
 #' data = prepare_sim_data(params_by_group)
 #' 
-prepare_sim_data = function(group_params, 
-                            quantiles = c(0.05, 0.95)) {
+prepare_sim_data = function(group_params) {
   
   n_groups = length(group_params)
   data = NULL
   
   # Simulate data based on parameters for different groups
   for (i in 1:n_groups) {
+    
     data = dplyr::bind_rows(
       data,
       generate_data(n_subj = group_params[[i]]$n_subj, 

@@ -34,7 +34,7 @@ For this demo, we will generate accelerometer data for three independent groups 
 params_by_group = list(
   list(n_subj = 70, n_points = 1000, 
        scaling = 300, thetas = c(-0.8, 2.0, 2.31)),
-  list(n_subj = 100, n_points = 1000, 
+  list(n_subj = 100, n_points = 1000,
        scaling = 300, thetas = c(-0.402, 1.0, 1.65)),
   list(n_subj = 130, n_points = 1000, 
        scaling = 300, thetas = c(-0.201, 0.5, 1.18))

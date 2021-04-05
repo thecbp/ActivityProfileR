@@ -1,0 +1,49 @@
+PROBLEM: 
+
+Lines 100-129 in the initialize_grid() function contain some hard-coded values. 
+In this case, the code assumes that there are three groups in the data. More 
+specifically: the creation of a "valid_lambdas" column in the variable "mu_lambda_grid"
+is where the hard coding is 
+
+
+
+Why was it done this way?
+
+Hsin-Wen's original simulation code used three groups. His original source code
+does not assume there is three groups, but his code was very difficult to read
+so I had to recreate the values that were created in each of the variables in 
+his original source code.
+
+I hope that this text file helps to clear up some things about the original
+code and my rewriting of it?
+
+What is happening in the initialize_grid() function?
+
+The original paper mentions a particular variable R(a), which represents an empirical likelihood ratio where a is a given activity level. This R(a) variable is related to a statistic K_n, which represents a supremum over a range of a1 to a2 of the value -2 log R(a). This statistic is the focus of the original paper.
+
+intialize_grid() is a part of the general process that tries to calculate this K_n statistic. More specifically, it helps out with calculating the value -2 log R(a) for a given value of a. 
+
+The neg2logRa() function calculates this -2 log R(a) for a given value of a. Within this function, initialize_grid() is used. Hsin-Wen originally implemented some kind of numerical algorithm involving estimating equations to calculate this value. The initialize_grid() function is responsible for creating a grid of mu and lambda values that are for use in these estimating equations. Mu and lambda change depending on the activity profiles (Ta) in the data.
+
+A while loop is used to go through this grid of mu and lambda values until the estimating equations are satisfied. 
+
+What does the original implementation look like?
+
+Hsin-wen's original code is contained in the file functions_to_be_sources.R
+
+My neg2logRa() function encapsulates the neg2logR_test() function that Hsin-Wen 
+creates on line 52 in functions_to_be_sources.R
+
+In my neg2logRa() function, the while loop starts at line 33.
+In Hsin-Wen's file, the while loop starts at line 92. 
+
+
+I am 95% sure that my hard-coded lines (100-129) correspond to lines 113-121 in 
+functions_to_be_sources.R (corresponding to a variable called init_Delta_grid_expand). 
+This variable is an intense multi-level apply that is reshaped into a matrix of values. 
+I was not sure how the different dimensions were related to each group, so this is where I
+started to just assume 3 groups and started to reverse-engineer. 
+
+ 
+
+
